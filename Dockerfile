@@ -26,8 +26,9 @@ RUN apk add --no-cache ca-certificates tzdata curl
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget -q --spider http://localhost:18790/health || exit 1
 
-# Copy binary
+# Copy binary and entrypoint
 COPY --from=builder /src/build/picoclaw /usr/local/bin/picoclaw
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Create non-root user and group
 RUN addgroup -g 1000 picoclaw && \
@@ -39,5 +40,5 @@ USER picoclaw
 # Run onboard to create initial directories and config
 RUN /usr/local/bin/picoclaw onboard
 
-ENTRYPOINT ["picoclaw"]
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["gateway"]
