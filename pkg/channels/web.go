@@ -96,7 +96,7 @@ func (wc *WebChannel) handleChat(w http.ResponseWriter, r *http.Request) {
 		ChatID  string `json:"chat_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Bad request: %v", err), http.StatusBadRequest)
 		return
 	}
 	if req.Message == "" {
