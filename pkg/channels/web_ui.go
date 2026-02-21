@@ -91,15 +91,28 @@ html,body{height:100%;width:100%;font-family:-apple-system,BlinkMacSystemFont,'S
 pre:hover .copy-btn{opacity:1}
 .copy-btn:hover{color:var(--accent2);border-color:var(--accent)}
 
-/* Typing */
-.typing{display:none;align-self:flex-start;padding:0 16px}
-.typing.active{display:flex;align-items:center;gap:8px}
-.typing-dots{display:flex;gap:4px}
-.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--text2);animation:bounce 1.4s ease infinite}
-.typing-dots span:nth-child(2){animation-delay:.2s}
-.typing-dots span:nth-child(3){animation-delay:.4s}
-@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
-.typing-label{font-size:12px;color:var(--text2)}
+/* Processing Indicator */
+.typing{display:none;align-self:flex-start;max-width:88%;animation:msgIn .35s cubic-bezier(.4,0,.2,1)}
+.typing.active{display:block}
+.process-card{background:var(--bot-bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.process-header{display:flex;align-items:center;gap:10px}
+.process-spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent2);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.process-title{font-size:13px;font-weight:600;color:var(--text)}
+.process-steps{display:flex;flex-direction:column;gap:6px}
+.process-step{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);transition:all .3s ease}
+.process-step.active{color:var(--accent2)}
+.process-step.done{color:var(--success)}
+.step-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px}
+.step-icon .dot{width:5px;height:5px;border-radius:50%;background:var(--text3)}
+.process-step.active .dot{background:var(--accent2);box-shadow:0 0 6px var(--accent);animation:glow 1.5s ease infinite}
+.process-step.done .dot{display:none}
+.step-icon .check{display:none}
+.process-step.done .check{display:inline;color:var(--success)}
+@keyframes glow{0%,100%{opacity:1}50%{opacity:.4}}
+.process-bar{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-top:2px}
+.process-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:1px;width:0%;transition:width .4s ease}
+.process-elapsed{font-size:10px;color:var(--text3);text-align:right;margin-top:-2px}
 
 /* Welcome */
 .welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:40px 24px;text-align:center}
@@ -134,7 +147,7 @@ pre:hover .copy-btn{opacity:1}
 <div class="app">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo">A</div>
+      <div class="sidebar-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
       <span class="sidebar-brand">Assistant</span>
     </div>
     <button class="new-chat-btn" onclick="newChat()">
@@ -158,7 +171,7 @@ pre:hover .copy-btn{opacity:1}
     </div>
     <div class="messages" id="messages">
       <div class="welcome" id="welcome">
-        <div class="welcome-icon">A</div>
+        <div class="welcome-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
         <h2>Hello</h2>
         <p>How can I help you today? Start a conversation or pick a suggestion below.</p>
         <div class="suggestions">
@@ -169,8 +182,32 @@ pre:hover .copy-btn{opacity:1}
         </div>
       </div>
       <div class="typing" id="typing">
-        <div class="typing-dots"><span></span><span></span><span></span></div>
-        <span class="typing-label">Thinking...</span>
+        <div class="process-card">
+          <div class="process-header">
+            <div class="process-spinner"></div>
+            <span class="process-title" id="processTitle">Processing</span>
+          </div>
+          <div class="process-steps" id="processSteps">
+            <div class="process-step active" data-step="0">
+              <span class="step-icon"><span class="dot"></span><span class="check">&#10003;</span></span>
+              <span>Receiving your message...</span>
+            </div>
+            <div class="process-step" data-step="1">
+              <span class="step-icon"><span class="dot"></span><span class="check">&#10003;</span></span>
+              <span>Analyzing context...</span>
+            </div>
+            <div class="process-step" data-step="2">
+              <span class="step-icon"><span class="dot"></span><span class="check">&#10003;</span></span>
+              <span>Generating response...</span>
+            </div>
+            <div class="process-step" data-step="3">
+              <span class="step-icon"><span class="dot"></span><span class="check">&#10003;</span></span>
+              <span>Finalizing...</span>
+            </div>
+          </div>
+          <div class="process-bar"><div class="process-bar-fill" id="processBar"></div></div>
+          <div class="process-elapsed" id="processElapsed">0.0s</div>
+        </div>
       </div>
     </div>
     <div class="input-area">
@@ -189,14 +226,71 @@ pre:hover .copy-btn{opacity:1}
 <script>
 var BT=String.fromCharCode(96);
 var currentChatID=null,conversations=[],hasDB=false,eventSource=null,waiting=false;
+var processTimer=null,processStart=0,processStep=0;
 var $=function(id){return document.getElementById(id)};
 var messagesEl=$('messages'),welcomeEl=$('welcome'),typingEl=$('typing'),inputEl=$('input');
 var sendBtnEl=$('sendBtn'),convListEl=$('convList'),sidebarEl=$('sidebar'),overlayEl=$('overlay');
 var headerTitleEl=$('headerTitle'),dbBadgeEl=$('dbBadge'),toastEl=$('toast');
+var processTitleEl=$('processTitle'),processBarEl=$('processBar'),processElapsedEl=$('processElapsed'),processStepsEl=$('processSteps');
 
 function toggleSidebar(){sidebarEl.classList.toggle('open');overlayEl.classList.toggle('show')}
 function closeSidebar(){sidebarEl.classList.remove('open');overlayEl.classList.remove('show')}
 function genID(){return 'web-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)}
+
+/* Processing simulation */
+var processLabels=[
+  ['Receiving your message...','Analyzing context...','Generating response...','Finalizing...'],
+  ['Reading input...','Understanding intent...','Composing reply...','Polishing...'],
+  ['Processing request...','Searching knowledge...','Crafting response...','Wrapping up...']
+];
+var processTimings=[800,2200,5000,9000]; /* ms thresholds per step */
+
+function startProcessing(){
+  processStep=0;processStart=Date.now();
+  var labels=processLabels[Math.floor(Math.random()*processLabels.length)];
+  var steps=processStepsEl.querySelectorAll('.process-step');
+  steps.forEach(function(s,i){s.className='process-step'+(i===0?' active':'');s.querySelector('span:last-child').textContent=labels[i]});
+  processBarEl.style.width='5%';processElapsedEl.textContent='0.0s';
+  processTitleEl.textContent='Processing';
+  typingEl.classList.add('active');scrollBottom();
+  processTimer=setInterval(tickProcess,100);
+}
+function tickProcess(){
+  var elapsed=Date.now()-processStart;
+  var secs=(elapsed/1000).toFixed(1);
+  processElapsedEl.textContent=secs+'s';
+  /* Advance steps based on elapsed time */
+  var steps=processStepsEl.querySelectorAll('.process-step');
+  var newStep=0;
+  for(var i=0;i<processTimings.length;i++){if(elapsed>processTimings[i])newStep=i+1}
+  if(newStep>3)newStep=3;
+  if(newStep!==processStep){
+    processStep=newStep;
+    steps.forEach(function(s,i){
+      if(i<newStep){s.className='process-step done'}
+      else if(i===newStep){s.className='process-step active'}
+      else{s.className='process-step'}
+    });
+  }
+  /* Progress bar: asymptotic approach to 90% */
+  var pct=Math.min(90,5+85*(1-Math.exp(-elapsed/8000)));
+  processBarEl.style.width=pct+'%';
+  /* Update title after a while */
+  if(elapsed>6000)processTitleEl.textContent='Almost ready';
+  else if(elapsed>3000)processTitleEl.textContent='Working on it';
+}
+function stopProcessing(){
+  if(processTimer){clearInterval(processTimer);processTimer=null}
+  /* Complete all steps */
+  var steps=processStepsEl.querySelectorAll('.process-step');
+  steps.forEach(function(s){s.className='process-step done'});
+  processBarEl.style.width='100%';
+  var elapsed=Date.now()-processStart;
+  processElapsedEl.textContent=(elapsed/1000).toFixed(1)+'s';
+  processTitleEl.textContent='Done';
+  /* Brief pause to show completion, then hide */
+  setTimeout(function(){typingEl.classList.remove('active')},400);
+}
 
 function newChat(){
   currentChatID=genID();headerTitleEl.textContent='New Chat';clearMessages();
@@ -232,7 +326,7 @@ function isToday(d){var n=new Date();return d.getDate()===n.getDate()&&d.getMont
 
 function loadConversations(){
   fetch('/api/conversations').then(function(r){return r.json()}).then(function(d){
-    hasDB=!!d.db;dbBadgeEl.textContent=hasDB?'PostgreSQL':'Local';
+    hasDB=!!d.db;dbBadgeEl.textContent=hasDB?'Cloud':'Local';
     dbBadgeEl.className='db-badge '+(hasDB?'on':'off');
     if(d.conversations&&d.conversations.length){conversations=d.conversations;renderConvList()}
   }).catch(function(e){console.error('Load conversations',e)});
@@ -248,7 +342,7 @@ function connectSSE(){
   eventSource=new EventSource('/api/stream?chat_id='+encodeURIComponent(currentChatID));
   eventSource.onmessage=function(e){
     try{var data=JSON.parse(e.data);
-      if(data.type==='message'){hideTyping();addMessage(data.content,'bot',true);waiting=false;updateSendBtn()}
+      if(data.type==='message'){stopProcessing();addMessage(data.content,'bot',true);waiting=false;updateSendBtn()}
     }catch(err){console.error('SSE parse',err)}
   };
   eventSource.onerror=function(){setTimeout(function(){if(currentChatID)connectSSE()},3000)};
@@ -258,7 +352,8 @@ function addMessage(text,role,animate){
   welcomeEl.style.display='none';
   var wrap=document.createElement('div');wrap.className='msg msg--'+role;
   if(!animate)wrap.style.animation='none';
-  var avatar=document.createElement('div');avatar.className='msg-avatar';avatar.textContent=role==='user'?'U':'P';
+  var avatar=document.createElement('div');avatar.className='msg-avatar';
+  avatar.innerHTML=role==='user'?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>';
   var body=document.createElement('div');body.className='msg-body';
   var bubble=document.createElement('div');bubble.className='msg-bubble';
   if(role==='bot'){bubble.innerHTML=renderMarkdown(text)}else{bubble.textContent=text}
@@ -279,8 +374,8 @@ function renderMarkdown(t){
 }
 function copyCode(btn){var code=btn.parentElement.querySelector('code').textContent;navigator.clipboard.writeText(code).then(function(){btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy'},1500)})}
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function showTyping(){typingEl.classList.add('active');scrollBottom()}
-function hideTyping(){typingEl.classList.remove('active')}
+function showTyping(){startProcessing()}
+function hideTyping(){stopProcessing()}
 function scrollBottom(){requestAnimationFrame(function(){messagesEl.scrollTop=messagesEl.scrollHeight})}
 function updateSendBtn(){sendBtnEl.disabled=waiting||!inputEl.value.trim()}
 
@@ -299,7 +394,7 @@ function sendMessage(){
   fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({message:text,chat_id:currentChatID})
   }).then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(t)})})
-  .catch(function(err){hideTyping();waiting=false;updateSendBtn();showToast('Failed to send. Try again.');console.error('Send',err)});
+  .catch(function(err){stopProcessing();waiting=false;updateSendBtn();showToast('Failed to send. Try again.');console.error('Send',err)});
 }
 function useSuggestion(el){inputEl.value=el.textContent;sendMessage()}
 function showToast(msg){toastEl.textContent=msg;toastEl.classList.add('show');setTimeout(function(){toastEl.classList.remove('show')},3000)}

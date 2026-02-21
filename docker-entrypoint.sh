@@ -8,8 +8,28 @@ fi
 CONFIG_DIR="$HOME/.picoclaw"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 
-# Priority: Kimi > OpenRouter > Anthropic
-if [ -n "$KIMI_API_KEY" ]; then
+# Priority: DeepSeek > Kimi > OpenRouter
+if [ -n "$DEEPSEEK_API_KEY" ]; then
+    PICOCLAW_MODEL="${PICOCLAW_MODEL:-deepseek/deepseek-chat}"
+    mkdir -p "$CONFIG_DIR"
+    cat > "$CONFIG_FILE" <<EOCFG
+{
+  "agents": {
+    "defaults": {
+      "model": "$PICOCLAW_MODEL"
+    }
+  },
+  "model_list": [
+    {
+      "model_name": "$PICOCLAW_MODEL",
+      "model": "$PICOCLAW_MODEL",
+      "api_base": "https://api.deepseek.com/v1",
+      "api_key": "$DEEPSEEK_API_KEY"
+    }
+  ]
+}
+EOCFG
+elif [ -n "$KIMI_API_KEY" ]; then
     PICOCLAW_MODEL="${PICOCLAW_MODEL:-moonshot/kimi-k2.5}"
     mkdir -p "$CONFIG_DIR"
     cat > "$CONFIG_FILE" <<EOCFG
@@ -45,25 +65,6 @@ elif [ -n "$OPENROUTER_API_KEY" ]; then
       "model": "$PICOCLAW_MODEL",
       "api_base": "https://openrouter.ai/api/v1",
       "api_key": "$OPENROUTER_API_KEY"
-    }
-  ]
-}
-EOCFG
-elif [ -n "$PICOCLAW_PROVIDERS_ANTHROPIC_API_KEY" ]; then
-    mkdir -p "$CONFIG_DIR"
-    cat > "$CONFIG_FILE" <<EOCFG
-{
-  "agents": {
-    "defaults": {
-      "model": "claude-sonnet-4-6"
-    }
-  },
-  "model_list": [
-    {
-      "model_name": "claude-sonnet-4-6",
-      "model": "anthropic/claude-sonnet-4-6",
-      "api_base": "https://api.anthropic.com/v1",
-      "api_key": "$PICOCLAW_PROVIDERS_ANTHROPIC_API_KEY"
     }
   ]
 }
