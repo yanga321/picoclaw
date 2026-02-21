@@ -259,6 +259,57 @@ func sanitizeHistoryForProvider(history []providers.Message) []providers.Message
 		}
 	}
 
+	// Strip trailing assistant messages with tool calls that are missing
+	// their tool result responses. This can happen if the process was
+	// interrupted between saving the assistant message and the tool results.
+	for len(sanitized) > 0 {
+		last := sanitized[len(sanitized)-1]
+		if last.Role != "assistant" || len(last.ToolCalls) == 0 {
+			break
+		}
+		// Count how many tool results follow this assistant message
+		// Since it's the last message, there are zero tool results.
+		logger.DebugCF("agent", "Dropping trailing assistant message with unresolved tool calls",
+			map[string]any{"tool_call_count": len(last.ToolCalls)})
+		sanitized = sanitized[:len(sanitized)-1]
+	}
+
+	// Validate that each assistant message with tool calls has all its
+	// tool results. Walk backwards and remove incomplete tool-call turns.
+	cleaned := true
+	for cleaned {
+		cleaned = false
+		for i := 0; i < len(sanitized); i++ {
+			msg := sanitized[i]
+			if msg.Role != "assistant" || len(msg.ToolCalls) == 0 {
+				continue
+			}
+			// Collect expected tool call IDs
+			expected := make(map[string]bool, len(msg.ToolCalls))
+			for _, tc := range msg.ToolCalls {
+				if tc.ID != "" {
+					expected[tc.ID] = true
+				}
+			}
+			// Check subsequent tool messages
+			for j := i + 1; j < len(sanitized) && sanitized[j].Role == "tool"; j++ {
+				delete(expected, sanitized[j].ToolCallID)
+			}
+			if len(expected) > 0 {
+				// Missing tool results — remove assistant + its tool messages
+				end := i + 1
+				for end < len(sanitized) && sanitized[end].Role == "tool" {
+					end++
+				}
+				logger.DebugCF("agent", "Dropping assistant tool-call turn with missing tool results",
+					map[string]any{"missing_count": len(expected)})
+				sanitized = append(sanitized[:i], sanitized[end:]...)
+				cleaned = true
+				break
+			}
+		}
+	}
+
 	return sanitized
 }
 
