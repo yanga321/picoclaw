@@ -17,6 +17,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/channels"
 	"github.com/sipeed/picoclaw/pkg/config"
 	"github.com/sipeed/picoclaw/pkg/cron"
+	"github.com/sipeed/picoclaw/pkg/database"
 	"github.com/sipeed/picoclaw/pkg/devices"
 	"github.com/sipeed/picoclaw/pkg/health"
 	"github.com/sipeed/picoclaw/pkg/heartbeat"
@@ -187,8 +188,25 @@ func gatewayCmd() {
 
 	healthServer := health.NewServer(cfg.Gateway.Host, cfg.Gateway.Port)
 
+	// Initialize PostgreSQL if configured
+	var db *database.DB
+	dbURL := cfg.Database.URL
+	if dbURL == "" && cfg.Database.Host != "" {
+		dbURL = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+			cfg.Database.Host, cfg.Database.Port, cfg.Database.User, cfg.Database.Password, cfg.Database.DBName, cfg.Database.SSLMode)
+	}
+	if dbURL != "" {
+		var dbErr error
+		db, dbErr = database.Open(database.Config{URL: dbURL})
+		if dbErr != nil {
+			fmt.Printf("⚠ Database connection failed (continuing without): %v\n", dbErr)
+		} else {
+			fmt.Println("✓ PostgreSQL connected")
+		}
+	}
+
 	// Web UI channel — always enabled, registers on the shared HTTP mux
-	webChannel, err := channels.NewWebChannel(msgBus, healthServer.Mux())
+	webChannel, err := channels.NewWebChannel(msgBus, healthServer.Mux(), db)
 	if err != nil {
 		fmt.Printf("Error creating web channel: %v\n", err)
 	} else {
@@ -217,6 +235,9 @@ func gatewayCmd() {
 	cronService.Stop()
 	agentLoop.Stop()
 	channelManager.StopAll(ctx)
+	if db != nil {
+		db.Close()
+	}
 	fmt.Println("✓ Gateway stopped")
 }
 

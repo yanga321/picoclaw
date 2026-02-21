@@ -57,6 +57,18 @@ type Config struct {
 	Tools     ToolsConfig     `json:"tools"`
 	Heartbeat HeartbeatConfig `json:"heartbeat"`
 	Devices   DevicesConfig   `json:"devices"`
+	Database  DatabaseConfig  `json:"database"`
+}
+
+type DatabaseConfig struct {
+	Enabled  bool   `json:"enabled"   env:"PICOCLAW_DATABASE_ENABLED"`
+	URL      string `json:"url"       env:"DATABASE_URL"`
+	Host     string `json:"host"      env:"PICOCLAW_DATABASE_HOST"`
+	Port     int    `json:"port"      env:"PICOCLAW_DATABASE_PORT"`
+	User     string `json:"user"      env:"PICOCLAW_DATABASE_USER"`
+	Password string `json:"password"  env:"PICOCLAW_DATABASE_PASSWORD"`
+	DBName   string `json:"dbname"    env:"PICOCLAW_DATABASE_DBNAME"`
+	SSLMode  string `json:"sslmode"   env:"PICOCLAW_DATABASE_SSLMODE"`
 }
 
 // MarshalJSON implements custom JSON marshaling for Config
