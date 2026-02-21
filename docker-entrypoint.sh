@@ -14,13 +14,13 @@ if [ -n "$PICOCLAW_PROVIDERS_ANTHROPIC_API_KEY" ]; then
 {
   "agents": {
     "defaults": {
-      "model": "claude-sonnet-4.6"
+      "model": "claude-sonnet-4-6"
     }
   },
   "model_list": [
     {
-      "model_name": "claude-sonnet-4.6",
-      "model": "anthropic/claude-sonnet-4.6",
+      "model_name": "claude-sonnet-4-6",
+      "model": "anthropic/claude-sonnet-4-6",
       "api_base": "https://api.anthropic.com/v1",
       "api_key": "$PICOCLAW_PROVIDERS_ANTHROPIC_API_KEY"
     }
