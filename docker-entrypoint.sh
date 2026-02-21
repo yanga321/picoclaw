@@ -8,7 +8,28 @@ fi
 CONFIG_DIR="$HOME/.picoclaw"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 
-if [ -n "$PICOCLAW_PROVIDERS_ANTHROPIC_API_KEY" ]; then
+# Prefer OpenRouter if key is set, otherwise fall back to Anthropic
+if [ -n "$OPENROUTER_API_KEY" ]; then
+    PICOCLAW_MODEL="${PICOCLAW_MODEL:-google/gemini-2.0-flash-exp:free}"
+    mkdir -p "$CONFIG_DIR"
+    cat > "$CONFIG_FILE" <<EOCFG
+{
+  "agents": {
+    "defaults": {
+      "model": "$PICOCLAW_MODEL"
+    }
+  },
+  "model_list": [
+    {
+      "model_name": "$PICOCLAW_MODEL",
+      "model": "$PICOCLAW_MODEL",
+      "api_base": "https://openrouter.ai/api/v1",
+      "api_key": "$OPENROUTER_API_KEY"
+    }
+  ]
+}
+EOCFG
+elif [ -n "$PICOCLAW_PROVIDERS_ANTHROPIC_API_KEY" ]; then
     mkdir -p "$CONFIG_DIR"
     cat > "$CONFIG_FILE" <<EOCFG
 {

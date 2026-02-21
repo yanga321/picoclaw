@@ -213,6 +213,22 @@ func (cb *ContextBuilder) BuildMessages(
 		})
 	}
 
+	// Ensure at least one non-system message exists.
+	// Some providers (e.g. OpenRouter) reject requests with only system messages.
+	hasNonSystem := false
+	for _, m := range messages {
+		if m.Role != "system" {
+			hasNonSystem = true
+			break
+		}
+	}
+	if !hasNonSystem {
+		messages = append(messages, providers.Message{
+			Role:    "user",
+			Content: "Hello",
+		})
+	}
+
 	return messages
 }
 
