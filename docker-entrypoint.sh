@@ -8,8 +8,28 @@ fi
 CONFIG_DIR="$HOME/.picoclaw"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 
-# Prefer OpenRouter if key is set, otherwise fall back to Anthropic
-if [ -n "$OPENROUTER_API_KEY" ]; then
+# Priority: Kimi > OpenRouter > Anthropic
+if [ -n "$KIMI_API_KEY" ]; then
+    PICOCLAW_MODEL="${PICOCLAW_MODEL:-moonshot/kimi-k2.5}"
+    mkdir -p "$CONFIG_DIR"
+    cat > "$CONFIG_FILE" <<EOCFG
+{
+  "agents": {
+    "defaults": {
+      "model": "$PICOCLAW_MODEL"
+    }
+  },
+  "model_list": [
+    {
+      "model_name": "$PICOCLAW_MODEL",
+      "model": "$PICOCLAW_MODEL",
+      "api_base": "https://api.moonshot.cn/v1",
+      "api_key": "$KIMI_API_KEY"
+    }
+  ]
+}
+EOCFG
+elif [ -n "$OPENROUTER_API_KEY" ]; then
     PICOCLAW_MODEL="${PICOCLAW_MODEL:-google/gemini-2.0-flash-exp:free}"
     mkdir -p "$CONFIG_DIR"
     cat > "$CONFIG_FILE" <<EOCFG
