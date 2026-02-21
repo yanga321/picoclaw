@@ -186,11 +186,21 @@ func gatewayCmd() {
 	}
 
 	healthServer := health.NewServer(cfg.Gateway.Host, cfg.Gateway.Port)
+
+	// Web UI channel — always enabled, registers on the shared HTTP mux
+	webChannel, err := channels.NewWebChannel(msgBus, healthServer.Mux())
+	if err != nil {
+		fmt.Printf("Error creating web channel: %v\n", err)
+	} else {
+		channelManager.RegisterChannel("web", webChannel)
+	}
+
 	go func() {
 		if err := healthServer.Start(); err != nil && err != http.ErrServerClosed {
 			logger.ErrorCF("health", "Health server error", map[string]any{"error": err.Error()})
 		}
 	}()
+	fmt.Printf("✓ Web UI available at http://%s:%d/\n", cfg.Gateway.Host, cfg.Gateway.Port)
 	fmt.Printf("✓ Health endpoints available at http://%s:%d/health and /ready\n", cfg.Gateway.Host, cfg.Gateway.Port)
 
 	go agentLoop.Run(ctx)

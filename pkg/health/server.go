@@ -46,10 +46,15 @@ func NewServer(host string, port int) *Server {
 		Addr:         addr,
 		Handler:      mux,
 		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		WriteTimeout: 120 * time.Second, // SSE needs long writes
 	}
 
 	return s
+}
+
+// Mux returns the underlying ServeMux so other components can register routes.
+func (s *Server) Mux() *http.ServeMux {
+	return s.server.Handler.(*http.ServeMux)
 }
 
 func (s *Server) Start() error {
