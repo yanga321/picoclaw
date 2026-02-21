@@ -11,7 +11,7 @@ var webUIHTML = `<!DOCTYPE html>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a0f">
-<title>PicoClaw</title>
+<title>Assistant</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -134,8 +134,8 @@ pre:hover .copy-btn{opacity:1}
 <div class="app">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo">P</div>
-      <span class="sidebar-brand">PicoClaw</span>
+      <div class="sidebar-logo">A</div>
+      <span class="sidebar-brand">Assistant</span>
     </div>
     <button class="new-chat-btn" onclick="newChat()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -158,9 +158,9 @@ pre:hover .copy-btn{opacity:1}
     </div>
     <div class="messages" id="messages">
       <div class="welcome" id="welcome">
-        <div class="welcome-icon">P</div>
-        <h2>PicoClaw Agent</h2>
-        <p>Your ultra-lightweight AI assistant. Start a conversation or pick a suggestion below.</p>
+        <div class="welcome-icon">A</div>
+        <h2>Hello</h2>
+        <p>How can I help you today? Start a conversation or pick a suggestion below.</p>
         <div class="suggestions">
           <div class="suggestion" onclick="useSuggestion(this)">What can you do?</div>
           <div class="suggestion" onclick="useSuggestion(this)">Summarize a topic</div>
@@ -170,12 +170,12 @@ pre:hover .copy-btn{opacity:1}
       </div>
       <div class="typing" id="typing">
         <div class="typing-dots"><span></span><span></span><span></span></div>
-        <span class="typing-label">PicoClaw is thinking...</span>
+        <span class="typing-label">Thinking...</span>
       </div>
     </div>
     <div class="input-area">
       <div class="input-row">
-        <textarea id="input" rows="1" placeholder="Message PicoClaw..." autofocus></textarea>
+        <textarea id="input" rows="1" placeholder="Send a message..." autofocus></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
