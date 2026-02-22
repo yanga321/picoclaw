@@ -8,15 +8,37 @@ fi
 CONFIG_DIR="$HOME/.picoclaw"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 
-# Priority: DeepSeek > Kimi > OpenRouter
-if [ -n "$DEEPSEEK_API_KEY" ]; then
+# Priority: OpenRouter (primary) > DeepSeek > Kimi
+if [ -n "$OPENROUTER_API_KEY" ]; then
+    PICOCLAW_MODEL="${PICOCLAW_MODEL:-openrouter/deepseek/deepseek-chat-v3-0324}"
+    mkdir -p "$CONFIG_DIR"
+    cat > "$CONFIG_FILE" <<EOCFG
+{
+  "agents": {
+    "defaults": {
+      "model": "$PICOCLAW_MODEL",
+      "max_tokens": 8192
+    }
+  },
+  "model_list": [
+    {
+      "model_name": "$PICOCLAW_MODEL",
+      "model": "$PICOCLAW_MODEL",
+      "api_base": "https://openrouter.ai/api/v1",
+      "api_key": "$OPENROUTER_API_KEY"
+    }
+  ]
+}
+EOCFG
+elif [ -n "$DEEPSEEK_API_KEY" ]; then
     PICOCLAW_MODEL="${PICOCLAW_MODEL:-deepseek/deepseek-chat}"
     mkdir -p "$CONFIG_DIR"
     cat > "$CONFIG_FILE" <<EOCFG
 {
   "agents": {
     "defaults": {
-      "model": "$PICOCLAW_MODEL"
+      "model": "$PICOCLAW_MODEL",
+      "max_tokens": 8192
     }
   },
   "model_list": [
@@ -36,7 +58,8 @@ elif [ -n "$KIMI_API_KEY" ]; then
 {
   "agents": {
     "defaults": {
-      "model": "$PICOCLAW_MODEL"
+      "model": "$PICOCLAW_MODEL",
+      "max_tokens": 8192
     }
   },
   "model_list": [
@@ -45,26 +68,6 @@ elif [ -n "$KIMI_API_KEY" ]; then
       "model": "$PICOCLAW_MODEL",
       "api_base": "https://api.moonshot.cn/v1",
       "api_key": "$KIMI_API_KEY"
-    }
-  ]
-}
-EOCFG
-elif [ -n "$OPENROUTER_API_KEY" ]; then
-    PICOCLAW_MODEL="${PICOCLAW_MODEL:-google/gemini-2.0-flash-exp:free}"
-    mkdir -p "$CONFIG_DIR"
-    cat > "$CONFIG_FILE" <<EOCFG
-{
-  "agents": {
-    "defaults": {
-      "model": "$PICOCLAW_MODEL"
-    }
-  },
-  "model_list": [
-    {
-      "model_name": "$PICOCLAW_MODEL",
-      "model": "$PICOCLAW_MODEL",
-      "api_base": "https://openrouter.ai/api/v1",
-      "api_key": "$OPENROUTER_API_KEY"
     }
   ]
 }
