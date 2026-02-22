@@ -25,7 +25,7 @@ func CreateProvider(cfg *config.Config) (LLMProvider, string, error) {
 
 	// Must have model_list at this point
 	if len(cfg.ModelList) == 0 {
-		return nil, "", fmt.Errorf("no providers configured. Please add entries to model_list in your config")
+		return nil, "", fmt.Errorf("no LLM API key configured. Set OPENROUTER_API_KEY, DEEPSEEK_API_KEY, or KIMI_API_KEY environment variable")
 	}
 
 	// Get model config from model_list

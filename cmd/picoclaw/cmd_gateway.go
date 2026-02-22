@@ -47,8 +47,13 @@ func gatewayCmd() {
 
 	provider, modelID, err := providers.CreateProvider(cfg)
 	if err != nil {
-		fmt.Printf("Error creating provider: %v\n", err)
-		os.Exit(1)
+		fmt.Println("============================================")
+		fmt.Printf("  WARNING: %v\n", err)
+		fmt.Println("  The web UI will start but the bot cannot respond.")
+		fmt.Println("  Set OPENROUTER_API_KEY to fix this.")
+		fmt.Println("============================================")
+		// Use a no-op provider so the web UI can still serve
+		provider = providers.NewNoOpProvider(err.Error())
 	}
 	// Use the resolved model ID from provider creation
 	if modelID != "" {
@@ -206,7 +211,7 @@ func gatewayCmd() {
 	}
 
 	// Web UI channel — always enabled, registers on the shared HTTP mux
-	webChannel, err := channels.NewWebChannel(msgBus, healthServer.Mux(), db)
+	webChannel, err := channels.NewWebChannel(msgBus, healthServer.Mux(), db, cfg.Agents.Defaults.Model)
 	if err != nil {
 		fmt.Printf("Error creating web channel: %v\n", err)
 	} else {

@@ -21,14 +21,16 @@ type WebChannel struct {
 	clients map[string]chan string // chatID -> SSE channel
 	mux     *http.ServeMux
 	db      *database.DB // nil if no database configured
+	model   string       // configured model name for status reporting
 }
 
-func NewWebChannel(messageBus *bus.MessageBus, mux *http.ServeMux, db *database.DB) (*WebChannel, error) {
+func NewWebChannel(messageBus *bus.MessageBus, mux *http.ServeMux, db *database.DB, model string) (*WebChannel, error) {
 	wc := &WebChannel{
 		BaseChannel: NewBaseChannel("web", nil, messageBus, nil),
 		clients:     make(map[string]chan string),
 		mux:         mux,
 		db:          db,
+		model:       model,
 	}
 
 	wc.registerRoutes()
@@ -309,5 +311,6 @@ func (wc *WebChannel) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"status":  "online",
 		"channel": "web",
 		"db":      wc.db != nil,
+		"model":   wc.model,
 	})
 }
