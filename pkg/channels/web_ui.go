@@ -91,28 +91,18 @@ html,body{height:100%;width:100%;font-family:-apple-system,BlinkMacSystemFont,'S
 pre:hover .copy-btn{opacity:1}
 .copy-btn:hover{color:var(--accent2);border-color:var(--accent)}
 
-/* Processing Indicator */
+/* Thinking Indicator */
 .typing{display:none;align-self:flex-start;max-width:88%;animation:msgIn .35s cubic-bezier(.4,0,.2,1)}
-.typing.active{display:block}
-.process-card{background:var(--bot-bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;display:flex;flex-direction:column;gap:10px}
-.process-header{display:flex;align-items:center;gap:10px}
-.process-spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent2);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.process-title{font-size:13px;font-weight:600;color:var(--text)}
-.process-steps{display:flex;flex-direction:column;gap:6px}
-.process-step{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);transition:all .3s ease}
-.process-step.active{color:var(--accent2)}
-.process-step.done{color:var(--success)}
-.step-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px}
-.step-icon .dot{width:5px;height:5px;border-radius:50%;background:var(--text3)}
-.process-step.active .dot{background:var(--accent2);box-shadow:0 0 6px var(--accent);animation:glow 1.5s ease infinite}
-.process-step.done .dot{display:none}
-.step-icon .check{display:none}
-.process-step.done .check{display:inline;color:var(--success)}
-@keyframes glow{0%,100%{opacity:1}50%{opacity:.4}}
-.process-bar{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-top:2px}
-.process-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:1px;width:0%;transition:width .4s ease}
-.process-elapsed{font-size:10px;color:var(--text3);text-align:right;margin-top:-2px}
+.typing.active{display:flex}
+.thinking-wrap{display:flex;gap:10px;align-items:flex-start}
+.thinking-avatar{width:30px;height:30px;border-radius:var(--radius-sm);background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;color:var(--accent2)}
+.thinking-body{background:var(--bot-bg);border:1px solid var(--border);border-radius:var(--radius);border-bottom-left-radius:4px;padding:12px 16px;display:flex;align-items:center;gap:10px}
+.thinking-dots{display:flex;gap:4px;align-items:center}
+.thinking-dots span{width:6px;height:6px;border-radius:50%;background:var(--accent2);opacity:.3;animation:dotBounce 1.4s ease-in-out infinite}
+.thinking-dots span:nth-child(2){animation-delay:.2s}
+.thinking-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dotBounce{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+.thinking-text{font-size:13px;color:var(--text2);font-style:italic}
 
 /* Welcome */
 .welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:40px 24px;text-align:center}
@@ -182,31 +172,12 @@ pre:hover .copy-btn{opacity:1}
         </div>
       </div>
       <div class="typing" id="typing">
-        <div class="process-card">
-          <div class="process-header">
-            <div class="process-spinner"></div>
-            <span class="process-title" id="processTitle">Processing</span>
+        <div class="thinking-wrap">
+          <div class="thinking-avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+          <div class="thinking-body">
+            <div class="thinking-dots"><span></span><span></span><span></span></div>
+            <span class="thinking-text">Thinking</span>
           </div>
-          <div class="process-steps" id="processSteps">
-            <div class="process-step active" data-step="0">
-              <span class="step-icon"><span class="dot"></span><span class="check">&#10003;</span></span>
-              <span>Receiving your message...</span>
-            </div>
-            <div class="process-step" data-step="1">
-              <span class="step-icon"><span class="dot"></span><span class="check">&#10003;</span></span>
-              <span>Analyzing context...</span>
-            </div>
-            <div class="process-step" data-step="2">
-              <span class="step-icon"><span class="dot"></span><span class="check">&#10003;</span></span>
-              <span>Generating response...</span>
-            </div>
-            <div class="process-step" data-step="3">
-              <span class="step-icon"><span class="dot"></span><span class="check">&#10003;</span></span>
-              <span>Finalizing...</span>
-            </div>
-          </div>
-          <div class="process-bar"><div class="process-bar-fill" id="processBar"></div></div>
-          <div class="process-elapsed" id="processElapsed">0.0s</div>
         </div>
       </div>
     </div>
@@ -226,71 +197,17 @@ pre:hover .copy-btn{opacity:1}
 <script>
 var BT=String.fromCharCode(96);
 var currentChatID=null,conversations=[],hasDB=false,eventSource=null,waiting=false;
-var processTimer=null,processStart=0,processStep=0;
 var $=function(id){return document.getElementById(id)};
 var messagesEl=$('messages'),welcomeEl=$('welcome'),typingEl=$('typing'),inputEl=$('input');
 var sendBtnEl=$('sendBtn'),convListEl=$('convList'),sidebarEl=$('sidebar'),overlayEl=$('overlay');
 var headerTitleEl=$('headerTitle'),dbBadgeEl=$('dbBadge'),toastEl=$('toast');
-var processTitleEl=$('processTitle'),processBarEl=$('processBar'),processElapsedEl=$('processElapsed'),processStepsEl=$('processSteps');
 
 function toggleSidebar(){sidebarEl.classList.toggle('open');overlayEl.classList.toggle('show')}
 function closeSidebar(){sidebarEl.classList.remove('open');overlayEl.classList.remove('show')}
 function genID(){return 'web-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)}
 
-/* Processing simulation */
-var processLabels=[
-  ['Receiving your message...','Analyzing context...','Generating response...','Finalizing...'],
-  ['Reading input...','Understanding intent...','Composing reply...','Polishing...'],
-  ['Processing request...','Searching knowledge...','Crafting response...','Wrapping up...']
-];
-var processTimings=[800,2200,5000,9000]; /* ms thresholds per step */
-
-function startProcessing(){
-  processStep=0;processStart=Date.now();
-  var labels=processLabels[Math.floor(Math.random()*processLabels.length)];
-  var steps=processStepsEl.querySelectorAll('.process-step');
-  steps.forEach(function(s,i){s.className='process-step'+(i===0?' active':'');s.querySelector('span:last-child').textContent=labels[i]});
-  processBarEl.style.width='5%';processElapsedEl.textContent='0.0s';
-  processTitleEl.textContent='Processing';
-  typingEl.classList.add('active');scrollBottom();
-  processTimer=setInterval(tickProcess,100);
-}
-function tickProcess(){
-  var elapsed=Date.now()-processStart;
-  var secs=(elapsed/1000).toFixed(1);
-  processElapsedEl.textContent=secs+'s';
-  /* Advance steps based on elapsed time */
-  var steps=processStepsEl.querySelectorAll('.process-step');
-  var newStep=0;
-  for(var i=0;i<processTimings.length;i++){if(elapsed>processTimings[i])newStep=i+1}
-  if(newStep>3)newStep=3;
-  if(newStep!==processStep){
-    processStep=newStep;
-    steps.forEach(function(s,i){
-      if(i<newStep){s.className='process-step done'}
-      else if(i===newStep){s.className='process-step active'}
-      else{s.className='process-step'}
-    });
-  }
-  /* Progress bar: asymptotic approach to 90% */
-  var pct=Math.min(90,5+85*(1-Math.exp(-elapsed/8000)));
-  processBarEl.style.width=pct+'%';
-  /* Update title after a while */
-  if(elapsed>6000)processTitleEl.textContent='Almost ready';
-  else if(elapsed>3000)processTitleEl.textContent='Working on it';
-}
-function stopProcessing(){
-  if(processTimer){clearInterval(processTimer);processTimer=null}
-  /* Complete all steps */
-  var steps=processStepsEl.querySelectorAll('.process-step');
-  steps.forEach(function(s){s.className='process-step done'});
-  processBarEl.style.width='100%';
-  var elapsed=Date.now()-processStart;
-  processElapsedEl.textContent=(elapsed/1000).toFixed(1)+'s';
-  processTitleEl.textContent='Done';
-  /* Brief pause to show completion, then hide */
-  setTimeout(function(){typingEl.classList.remove('active')},400);
-}
+function startProcessing(){typingEl.classList.add('active');scrollBottom()}
+function stopProcessing(){typingEl.classList.remove('active')}
 
 function newChat(){
   currentChatID=genID();headerTitleEl.textContent='New Chat';clearMessages();
