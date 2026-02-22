@@ -93,7 +93,8 @@ func (wc *WebChannel) Send(ctx context.Context, msg bus.OutboundMessage) error {
 }
 
 func (wc *WebChannel) handleIndex(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
+	// Serve the SPA for all non-API paths (catch-all for client-side routing)
+	if strings.HasPrefix(r.URL.Path, "/api/") {
 		http.NotFound(w, r)
 		return
 	}
